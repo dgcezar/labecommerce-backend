@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express'
 import cors from 'cors'
 import { TUser, TProduct, TPurchase } from './types'
+import { products, users } from './database'
 
 const app = express()
 
@@ -13,6 +14,24 @@ app.listen(3003, () => {
 
 app.get('/ping', (req: Request, res: Response) => {
     res.send('Pong!')
+})
+
+app.get('/users', (req: Request, res: Response) => {
+    res.status(200).send(users)
+})
+
+app.get('/products', (req: Request, res: Response) => {
+    res.status(200).send(products)
+})
+
+app.get('/products/search', (req: Request, res: Response) => {
+    const q = req.query.q as string
+
+    const result = products.filter((product) => {
+        return product.name.toLowerCase().includes(q.toLowerCase())
+    })
+
+    res.status(200).send(result)
 })
 
 // import { createProduct, createPurchase, createUser, getAllProducts, getAllPurchasesFromUserid, getAllUsers, getProductById, products, purchases, users } from "./database";
