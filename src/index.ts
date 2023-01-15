@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express'
 import cors from 'cors'
+import { CATEGORY } from './enum'
 import { TUser, TProduct, TPurchase } from './types'
 import { products, purchases, users } from './database'
 
@@ -104,6 +105,42 @@ app.post('/purchases', (req: Request, res: Response) => {
     purchases.push(newPurchase)
 
     res.status(201).send("Compra realizada com sucesso")
+})
+
+// PUT
+
+app.put('/users/:id', (req: Request, res: Response) => {
+    const id = req.params.id
+
+    const newEmail = req.body.email as string | undefined
+    const newPassword = req.body.password as string | undefined
+
+    const user = users.find((user) => user.id === id)
+
+    if (user) {
+        user.email = newEmail || user.email
+        user.password = newPassword || user.password
+    }
+
+    res.status(200).send("Cadastro atualizado com sucesso!")
+})
+
+app.put('/products/:id', (req: Request, res: Response) => {
+    const id = req.params.id
+
+    const newName = req.body.name as string | undefined
+    const newPrice = req.body.price as number | undefined
+    const newCategory = req.body.category as CATEGORY | undefined
+
+    const product = products.find((product) => product.id === id)
+
+    if (product) {
+        product.name = newName || product.name
+        product.price = newPrice || product.price
+        product.category = newCategory || product.category
+    }
+
+    res.status(200).send("Produto atualizado com sucesso!")
 })
 
 // import { createProduct, createPurchase, createUser, getAllProducts, getAllPurchasesFromUserid, getAllUsers, getProductById, products, purchases, users } from "./database";
