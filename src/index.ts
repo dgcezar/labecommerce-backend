@@ -12,6 +12,8 @@ app.listen(3003, () => {
     console.log("Servidor rodando na porta 3003")
 })
 
+// GET
+
 app.get('/ping', (req: Request, res: Response) => {
     res.send('Pong!')
 })
@@ -20,8 +22,32 @@ app.get('/users', (req: Request, res: Response) => {
     res.status(200).send(users)
 })
 
+app.get('/users/:id', (req: Request, res: Response) => {
+    const id = req.params.id
+    
+    const result = users.find((user) => user.id === id)
+
+    res.status(200).send(result)
+})
+
+app.get('/users/:id/purchases', (req: Request, res: Response) => {
+    const id = req.params.id
+
+    const result = purchases.find((purchase) => purchase.userId === id)
+
+    res.status(200).send(result)
+})
+
 app.get('/products', (req: Request, res: Response) => {
     res.status(200).send(products)
+})
+
+app.get('/products/:id', (req: Request, res: Response) => {
+    const id = req.params.id
+
+    const result = products.find((product) => product.id === id)
+
+    res.status(200).send(result)
 })
 
 app.get('/products/search', (req: Request, res: Response) => {
@@ -33,6 +59,8 @@ app.get('/products/search', (req: Request, res: Response) => {
 
     res.status(200).send(result)
 })
+
+// POST
 
 app.post('/users', (req: Request, res: Response) => {
     const {id, email, password} = req.body as TUser
