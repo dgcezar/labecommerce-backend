@@ -107,6 +107,32 @@ app.post('/purchases', (req: Request, res: Response) => {
     res.status(201).send("Compra realizada com sucesso")
 })
 
+// DELETE
+
+app.delete('/users/:id', (req: Request, res: Response) => {
+    const id = req.params.id
+
+    const userIndex = users.findIndex((user) => user.id === id)
+
+    if (userIndex) {
+        users.splice(userIndex, 1)
+    }
+
+    res.status(200).send("Usuário deletado com sucesso")
+})
+
+app.delete('/products/:id', (req: Request, res: Response) => {
+    const id = req.params.id
+
+    const productIndex = products.findIndex((product) => product.id === id)
+
+    if (productIndex) {
+        products.splice(productIndex, 1)
+    }
+
+    res.status(200).send("Produto deletado com sucesso")
+})
+
 // PUT
 
 app.put('/users/:id', (req: Request, res: Response) => {
