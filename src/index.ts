@@ -28,19 +28,39 @@ app.get("/users", (req: Request, res: Response) => {
 });
 
 app.get("/users/:id", (req: Request, res: Response) => {
-  const id = req.params.id;
+  try {
+    const id = req.params.id;
 
-  const result = users.find((user) => user.id === id);
+    const result = users.find((user) => user.id === id);
 
-  res.status(200).send(result);
+    if (!result) {
+      res.statusCode = 404;
+      throw new Error("'id' de usuário não existe");
+    }
+
+    res.status(200).send(result);
+  } catch (error: any) {
+    console.log(error);
+    res.send(error.message);
+  }
 });
 
 app.get("/users/:id/purchases", (req: Request, res: Response) => {
-  const id = req.params.id;
+  try {
+    const id = req.params.id;
 
-  const result = purchases.find((purchase) => purchase.userId === id);
+    const result = purchases.find((purchase) => purchase.userId === id);
 
-  res.status(200).send(result);
+    if (!result) {
+      res.statusCode = 404;
+      throw new Error("'id' de usuário não existe");
+    }
+
+    res.status(200).send(result);
+  } catch (error: any) {
+    console.log(error);
+    res.send(error.message);
+  }
 });
 
 app.get("/products", (req: Request, res: Response) => {
@@ -74,11 +94,21 @@ app.get("/products/search", (req: Request, res: Response) => {
 });
 
 app.get("/products/:id", (req: Request, res: Response) => {
-  const id = req.params.id;
+  try {
+    const id = req.params.id;
 
-  const result = products.find((product) => product.id === id);
+    const result = products.find((product) => product.id === id);
 
-  res.status(200).send(result);
+    if (!result) {
+      res.statusCode = 404;
+      throw new Error("'id' do produto não existe");
+    }
+
+    res.status(200).send(result);
+  } catch (error: any) {
+    console.log(error);
+    res.send(error.message);
+  }
 });
 
 // POST
@@ -93,6 +123,24 @@ app.post("/users", (req: Request, res: Response) => {
       password,
     };
 
+    if (newUser !== undefined) {
+      const idExists = users.find((idOnUsers) => idOnUsers.id === id);
+
+      if (idExists) {
+        res.statusCode = 400;
+        throw new Error("'Id' já cadastrada");
+      }
+
+      const emailExists = users.find(
+        (emailOnUsers) => emailOnUsers.email === email
+      );
+
+      if (emailExists) {
+        res.statusCode = 400;
+        throw new Error("'Email' já cadastrado");
+      }
+    }
+
     users.push(newUser);
 
     res.status(201).send("Usuário registrado com sucesso!");
@@ -103,47 +151,96 @@ app.post("/users", (req: Request, res: Response) => {
 });
 
 app.post("/products", (req: Request, res: Response) => {
-  const { id, name, price, category } = req.body as TProduct;
+  try {
+    const { id, name, price, category } = req.body as TProduct;
 
-  const newProduct = {
-    id,
-    name,
-    price,
-    category,
-  };
+    const newProduct = {
+      id,
+      name,
+      price,
+      category,
+    };
 
-  products.push(newProduct);
+    if (newProduct !== undefined) {
+      const idExists = products.find((idOnProduct) => idOnProduct.id === id);
 
-  res.status(201).send("Produto registrado com sucesso!");
+      if (idExists) {
+        res.statusCode = 400;
+        throw new Error("'Id' do produto já cadastrada");
+      }
+    }
+
+    products.push(newProduct);
+
+    res.status(201).send("Produto registrado com sucesso!");
+  } catch (error: any) {
+    console.log(error);
+    res.send(error.message);
+  }
 });
 
 app.post("/purchases", (req: Request, res: Response) => {
-  const { userId, productId, quantity, totalPrice } = req.body as TPurchase;
+  try {
+    const { userId, productId, quantity, totalPrice } = req.body as TPurchase;
 
-  const newPurchase = {
-    userId,
-    productId,
-    quantity,
-    totalPrice,
-  };
+    const newPurchase = {
+      userId,
+      productId,
+      quantity,
+      totalPrice,
+    };
 
-  purchases.push(newPurchase);
+    if (newPurchase !== undefined) {
+      const userIdExists = users.find(
+        (userIdOnUsers) => userIdOnUsers.id === userId
+      );
 
-  res.status(201).send("Compra realizada com sucesso");
+      if (!userIdExists) {
+        res.statusCode = 404;
+        throw new Error("'Id' do usuário não existe");
+      }
+
+      const productIdExists = products.find(
+        (productIdOnproducts) => productIdOnproducts.id === productId
+      );
+
+      if (!productIdExists) {
+        res.statusCode = 404;
+        throw new Error("'Id' do produto não existe");
+      }
+    }
+
+    purchases.push(newPurchase);
+
+    res.status(201).send("Compra realizada com sucesso");
+  } catch (error: any) {
+    console.log(error);
+    res.send(error.message);
+  }
 });
 
 // DELETE
 
 app.delete("/users/:id", (req: Request, res: Response) => {
-  const id = req.params.id;
+  try {
+    const id = req.params.id;
 
-  const userIndex = users.findIndex((user) => user.id === id);
+    const userIndex = users.findIndex((user) => user.id === id);
+   
+    if (!userIndex) {
+      res.statusCode = 404;
+      throw new Error("'id' do usuário não existe");
+    }
 
-  if (userIndex) {
-    users.splice(userIndex, 1);
+    if (userIndex) {
+      users.splice(userIndex, 1);
+    }
+
+    res.status(200).send("Usuário deletado com sucesso");
+  } catch (error: any) {
+    console.log(error);
+    res.send(error.message);
   }
-
-  res.status(200).send("Usuário deletado com sucesso");
 });
 
 app.delete("/products/:id", (req: Request, res: Response) => {
