@@ -197,7 +197,7 @@ app.post("/purchases", (req: Request, res: Response) => {
 
       if (!userIdExists) {
         res.statusCode = 404;
-        throw new Error("'Id' do usuário não existe");
+        throw new Error("Digite a 'Id' do usuário");
       }
 
       const productIdExists = products.find(
@@ -206,7 +206,7 @@ app.post("/purchases", (req: Request, res: Response) => {
 
       if (!productIdExists) {
         res.statusCode = 404;
-        throw new Error("'Id' do produto não existe");
+        throw new Error("Digite a 'Id' do produto");
       }
     }
 
