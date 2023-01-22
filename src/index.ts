@@ -226,69 +226,95 @@ app.delete("/users/:id", (req: Request, res: Response) => {
     const id = req.params.id;
 
     const userIndex = users.findIndex((user) => user.id === id);
-   
-    if (!userIndex) {
-      res.statusCode = 404;
-      throw new Error("'id' do usuário não existe");
-    }
 
-    if (userIndex) {
-      users.splice(userIndex, 1);
+    if (userIndex !== undefined) {
+      if (userIndex === -1) {
+        res.statusCode = 404;
+        throw new Error("'id' do usuário não existe");
+      } else {
+        users.splice(userIndex, 1);
+        res.status(200).send("Usuário deletado com sucesso");
+      }
     }
-
-    res.status(200).send("Usuário deletado com sucesso");
   } catch (error: any) {
     console.log(error);
+    if (res.statusCode === 200) res.status(500);
     res.send(error.message);
   }
 });
 
 app.delete("/products/:id", (req: Request, res: Response) => {
-  const id = req.params.id;
+  try {
+    const id = req.params.id;
 
-  const productIndex = products.findIndex((product) => product.id === id);
+    const productIndex = products.findIndex((product) => product.id === id);
 
-  if (productIndex) {
-    products.splice(productIndex, 1);
+    if (productIndex !== undefined) {
+      if (productIndex === -1) {
+        res.statusCode = 404;
+        throw new Error("'id' do produto não existe");
+      } else {
+        products.splice(productIndex, 1);
+        res.status(200).send("Produto deletado com sucesso");
+      }
+    }
+  } catch (error: any) {
+    console.log(error);
+    if (res.statusCode === 200) res.status(500);
+    res.send(error.message);
   }
-
-  res.status(200).send("Produto deletado com sucesso");
 });
 
 // PUT
 
 app.put("/users/:id", (req: Request, res: Response) => {
-  const id = req.params.id;
+  try {
+    const id = req.params.id;
 
-  const newEmail = req.body.email as string | undefined;
-  const newPassword = req.body.password as string | undefined;
+    const newEmail = req.body.email as string | undefined;
+    const newPassword = req.body.password as string | undefined;
 
-  const user = users.find((user) => user.id === id);
+    const user = users.find((user) => user.id === id);
 
-  if (user) {
-    user.email = newEmail || user.email;
-    user.password = newPassword || user.password;
+    if (!user) {
+      res.statusCode = 404;
+      throw new Error("'Id' do usuário não existe");
+    } else {
+      user.email = newEmail || user.email;
+      user.password = newPassword || user.password;
+      res.status(200).send("Cadastro atualizado com sucesso!");
+    }
+  } catch (error: any) {
+    console.log(error);
+    if (res.statusCode === 200) res.status(500);
+    res.send(error.message);
   }
-
-  res.status(200).send("Cadastro atualizado com sucesso!");
 });
 
 app.put("/products/:id", (req: Request, res: Response) => {
-  const id = req.params.id;
+  try {
+    const id = req.params.id;
 
-  const newName = req.body.name as string | undefined;
-  const newPrice = req.body.price as number | undefined;
-  const newCategory = req.body.category as CATEGORY | undefined;
+    const newName = req.body.name as string | undefined;
+    const newPrice = req.body.price as number | undefined;
+    const newCategory = req.body.category as CATEGORY | undefined;
 
-  const product = products.find((product) => product.id === id);
+    const product = products.find((product) => product.id === id);
 
-  if (product) {
-    product.name = newName || product.name;
-    product.price = newPrice || product.price;
-    product.category = newCategory || product.category;
+    if (!product) {
+      res.statusCode = 404;
+      throw new Error("'Id' do produto não existe");
+    } else {
+      product.name = newName || product.name;
+      product.price = newPrice || product.price;
+      product.category = newCategory || product.category;
+      res.status(200).send("Produto atualizado com sucesso!");
+    }
+  } catch (error: any) {
+    console.log(error);
+    if (res.statusCode === 200) res.status(500);
+    res.send(error.message);
   }
-
-  res.status(200).send("Produto atualizado com sucesso!");
 });
 
 // import { createProduct, createPurchase, createUser, getAllProducts, getAllPurchasesFromUserid, getAllUsers, getProductById, products, purchases, users } from "./database";
