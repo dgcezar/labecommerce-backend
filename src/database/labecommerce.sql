@@ -31,3 +31,9 @@ VALUES
     ("3", "Pulseira Charmander", 20, "ACCESSORIES"),
     ("4", "Boné Squirtle", 50, "ACCESSORIES"),
     ("5", "Relógio Primeira Geração", 200, "ACCESSORIES");
+
+CREATE TABLE purchases (
+    id TEXT PRIMARY KEY UNIQUE NOT NULL,
+    total_price REAL NOT NULL,
+    paid INTEGER NOT NULL,
+)
