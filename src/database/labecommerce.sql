@@ -1,8 +1,10 @@
 -- Active: 1674490575593@@127.0.0.1@3306
 CREATE TABLE users (
     id TEXT PRIMARY KEY UNIQUE NOT NULL,
+    name TEXT NOT NULL,
     email TEXT UNIQUE NOT NULL,
-    password TEXT NOT NULL
+    password TEXT NOT NULL,
+    create_at TEXT DEFAULT (DATETIME()) NOT NULL
 );
 
 SELECT * FROM users;

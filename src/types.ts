@@ -2,8 +2,10 @@ import { CATEGORY } from "./enum"
 
 export type TUser = {
     id: string,
+    name: string,
     email: string,
-    password: string
+    password: string,
+    createAt: string
 }
 
 export type TProduct = {
