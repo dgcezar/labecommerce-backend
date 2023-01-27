@@ -255,9 +255,9 @@ app.post("/users", async (req: Request, res: Response) => {
 
 app.post("/products", async (req: Request, res: Response) => {
   try {
-    const { id, name, price } = req.body as TProduct;
+    const { id, name, price, description, image_url } = req.body as TProduct;
 
-    if (!id || !name || !price) {
+    if (!id || !name || !price || !description || !image_url) {
       res.status(400);
       throw new Error("Dados inválidos");
     }
@@ -266,16 +266,38 @@ app.post("/products", async (req: Request, res: Response) => {
       id,
       name,
       price,
+      description,
+      image_url,
     };
+    
+    if (newProduct !== undefined) {
+      const [idExists]: TProduct[] | undefined[] = await db("products").where({
+        id: id,
+      });
 
-    // if (newProduct !== undefined) {
-    //   const idExists = products.find((idOnProduct) => idOnProduct.id === id);
+      if (idExists) {
+        res.statusCode = 400;
+        throw new Error("'Id' já cadastrada");
+      }
 
-    //   if (idExists) {
-    //     res.statusCode = 400;
-    //     throw new Error("'Id' do produto já cadastrada");
-    //   }
-    // }
+      const [nameExists]: TProduct[] | undefined[] = await db("products").where({
+        name: name,
+      });
+
+      if (nameExists) {
+        res.statusCode = 400;
+        throw new Error("'name' já cadastrado");
+      }
+
+      // const [imageUrlExists]: TProduct[] | undefined[] = await db("products").where({
+      //   imageUrl: imageUrl,
+      // });
+
+      // if (imageUrlExists) {
+      //   res.statusCode = 400;
+      //   throw new Error("'imageUrl' já cadastrado");
+      // }
+    }
 
     await db("products").insert(newProduct);
 
@@ -406,17 +428,58 @@ app.put("/users/:id", async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
 
+    const newName = req.body.name as string | undefined;
     const newEmail = req.body.email as string | undefined;
     const newPassword = req.body.password as string | undefined;
 
-    // if (!user) {
-    //   res.statusCode = 404;
-    //   throw new Error("'Id' do usuário não existe");
-    // } else {
-    //   user.email = newEmail || user.email;
-    //   user.password = newPassword || user.password;
-    //   res.status(200).send("Cadastro atualizado com sucesso!");
-    // }
+    if (newName !== undefined) {
+      if (typeof newName !== "string") {
+        res.status(400);
+        throw new Error("'name' deve ser string");
+      }
+      if (newName.length < 4) {
+        res.status(400);
+        throw new Error("'name' deve possuir no mínimo 4 caracteres");
+      }
+    }
+
+    if (newEmail !== undefined) {
+      if (typeof newEmail !== "string") {
+        res.status(400);
+        throw new Error("'email' deve ser string");
+      }
+      if (newEmail.length < 10) {
+        res.status(400);
+        throw new Error("'email' deve possuir no mínimo 10 caracteres");
+      }
+    }
+
+    if (newPassword !== undefined) {
+      if (typeof newPassword !== "string") {
+        res.status(400);
+        throw new Error("'password' deve ser string");
+      }
+
+      if (newPassword.length < 6) {
+        res.status(400);
+        throw new Error("'password' deve possuir no mínimo 6 caracteres");
+      }
+    }
+
+    const [user] = await db("users").where({ id: id });
+
+    if (user) {
+      const updatedUser = {
+        name: newName || user.name,
+        email: newEmail || user.email,
+        password: newPassword || user.password,
+      };
+
+      await db("users").update(updatedUser).where({ id: id });
+    } else {
+      res.status(404);
+      throw new Error("'id' não encontrada");
+    }
   } catch (error) {
     console.log(error);
 
@@ -439,7 +502,7 @@ app.put("/products/:id", async (req: Request, res: Response) => {
     const newName = req.body.name as string | undefined;
     const newPrice = req.body.price as number;
     const newDescription = req.body.description as string | undefined;
-    const newImageUrl = req.body.image_Url as string | undefined;
+    const newImageUrl = req.body.image_url as string | undefined;
 
     if (newName !== undefined) {
       if (typeof newName !== "string") {
@@ -478,23 +541,23 @@ app.put("/products/:id", async (req: Request, res: Response) => {
     if (newImageUrl !== undefined) {
       if (typeof newImageUrl !== "string") {
         res.status(400);
-        throw new Error("'imageUrl' deve ser string");
+        throw new Error("'image_url' deve ser string");
       }
 
       if (newImageUrl.length < 10) {
         res.status(400);
-        throw new Error("'imageUrl' deve possuir no mínimo 10 caracteres");
+        throw new Error("'image_url' deve possuir no mínimo 10 caracteres");
       }
     }
 
-    const [product] = await db("users").where({ id: id });
+    const [product] = await db("products").where({ id: id });
 
     if (product) {
       const updatedProduct = {
         name: newName || product.name,
         price: isNaN(newPrice) ? product.salary : newPrice,
         description: newDescription || product.description,
-        imageUrl: newImageUrl || product.image_Url,
+        image_url: newImageUrl || product.image_url,
       };
 
       await db("products").update(updatedProduct).where({ id: id });
