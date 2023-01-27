@@ -132,18 +132,25 @@ app.get("/products", async (req: Request, res: Response) => {
 
 app.get("/products/search", async (req: Request, res: Response) => {
   try {
-    const q = req.query.q as string;
+    const q = req.query.q as string | undefined;
 
-    const result = await db("products");
+    if (q !== undefined) {
+      const [result]: TProduct[] | undefined[] = await db("products").where({
+        name: q,
+      });
 
-    if (result !== undefined) {
       if (q.length < 1) {
         res.statusCode = 404;
         throw new Error("'name' deve possuir no mínimo 1 caractere");
       }
-    }
 
-    res.status(200).send(result);
+      if (result !== undefined) {
+        res.status(200).send(result);
+      } else {
+        res.statusCode = 404;
+        throw new Error("'name' do produto não existe");
+      }
+    }
   } catch (error) {
     console.log(error);
 
@@ -161,16 +168,20 @@ app.get("/products/search", async (req: Request, res: Response) => {
 
 app.get("/products/:id", async (req: Request, res: Response) => {
   try {
-    const id = req.params.id;
+    const id = req.params.id as string | undefined;
 
-    const result = await db("products");
+    if (id !== undefined) {
+      const [result]: TProduct[] | undefined[] = await db("products").where({
+        id: id,
+      });
 
-    if (!result) {
-      res.statusCode = 404;
-      throw new Error("'id' do produto não existe");
+      if (result !== undefined) {
+        res.status(200).send(result);
+      } else {
+        res.statusCode = 404;
+        throw new Error("'id' de produto não existe");
+      }
     }
-
-    res.status(200).send(result);
   } catch (error) {
     console.log(error);
 
@@ -205,14 +216,18 @@ app.post("/users", async (req: Request, res: Response) => {
     };
 
     if (newUser !== undefined) {
-      const [idExists]: TUser[] | undefined[] = await db("users").where({ id: id });
+      const [idExists]: TUser[] | undefined[] = await db("users").where({
+        id: id,
+      });
 
       if (idExists) {
         res.statusCode = 400;
         throw new Error("'Id' já cadastrada");
       }
 
-      const [emailExists]: TUser[] | undefined[] = await db("users").where({ email: email });
+      const [emailExists]: TUser[] | undefined[] = await db("users").where({
+        email: email,
+      });
 
       if (emailExists) {
         res.statusCode = 400;
@@ -240,9 +255,9 @@ app.post("/users", async (req: Request, res: Response) => {
 
 app.post("/products", async (req: Request, res: Response) => {
   try {
-    const { id, name, price, category } = req.body as TProduct;
+    const { id, name, price } = req.body as TProduct;
 
-    if (!id || !name || !price || !category) {
+    if (!id || !name || !price) {
       res.status(400);
       throw new Error("Dados inválidos");
     }
@@ -251,7 +266,6 @@ app.post("/products", async (req: Request, res: Response) => {
       id,
       name,
       price,
-      category,
     };
 
     // if (newProduct !== undefined) {
@@ -336,15 +350,14 @@ app.delete("/users/:id", async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
 
-    // if (userIndex !== undefined) {
-    //   if (userIndex === -1) {
-    //     res.statusCode = 404;
-    //     throw new Error("'id' do usuário não existe");
-    //   } else {
-    //     users.splice(userIndex, 1);
-    //     res.status(200).send("Usuário deletado com sucesso");
-    //   }
-    // }
+    const [user] = await db("users").where({ id: id });
+
+    if (!user) {
+      res.status(404);
+      throw new Error("'id' não encontrada");
+    }
+
+    await db("users").del().where({ id: id });
   } catch (error) {
     console.log(error);
 
@@ -364,15 +377,14 @@ app.delete("/products/:id", async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
 
-    // if (productIndex !== undefined) {
-    //   if (productIndex === -1) {
-    //     res.statusCode = 404;
-    //     throw new Error("'id' do produto não existe");
-    //   } else {
-    //     products.splice(productIndex, 1);
-    //     res.status(200).send("Produto deletado com sucesso");
-    //   }
-    // }
+    const [product] = await db("products").where({ id: id });
+
+    if (!product) {
+      res.status(404);
+      throw new Error("'id' do produto não encontrada");
+    }
+
+    await db("products").del().where({ id: id });
   } catch (error) {
     console.log(error);
 
@@ -425,18 +437,71 @@ app.put("/products/:id", async (req: Request, res: Response) => {
     const id = req.params.id;
 
     const newName = req.body.name as string | undefined;
-    const newPrice = req.body.price as number | undefined;
-    const newCategory = req.body.category as CATEGORY | undefined;
+    const newPrice = req.body.price as number;
+    const newDescription = req.body.description as string | undefined;
+    const newImageUrl = req.body.image_Url as string | undefined;
 
-    // if (!product) {
-    //   res.statusCode = 404;
-    //   throw new Error("'Id' do produto não existe");
-    // } else {
-    //   product.name = newName || product.name;
-    //   product.price = newPrice || product.price;
-    //   product.category = newCategory || product.category;
-    //   res.status(200).send("Produto atualizado com sucesso!");
-    // }
+    if (newName !== undefined) {
+      if (typeof newName !== "string") {
+        res.status(400);
+        throw new Error("'name' deve ser string");
+      }
+      if (newName.length < 4) {
+        res.status(400);
+        throw new Error("'name' deve possuir no mínimo 4 caracteres");
+      }
+    }
+
+    if (newPrice !== undefined) {
+      if (typeof newPrice !== "number") {
+        res.status(400);
+        throw new Error("'price' deve ser number");
+      }
+      if (newPrice < 0) {
+        res.status(400);
+        throw new Error("'price' não pode ser negativo");
+      }
+    }
+
+    if (newDescription !== undefined) {
+      if (typeof newDescription !== "string") {
+        res.status(400);
+        throw new Error("'description' deve ser string");
+      }
+
+      if (newDescription.length < 20) {
+        res.status(400);
+        throw new Error("'description' deve possuir no mínimo 20 caracteres");
+      }
+    }
+
+    if (newImageUrl !== undefined) {
+      if (typeof newImageUrl !== "string") {
+        res.status(400);
+        throw new Error("'imageUrl' deve ser string");
+      }
+
+      if (newImageUrl.length < 10) {
+        res.status(400);
+        throw new Error("'imageUrl' deve possuir no mínimo 10 caracteres");
+      }
+    }
+
+    const [product] = await db("users").where({ id: id });
+
+    if (product) {
+      const updatedProduct = {
+        name: newName || product.name,
+        price: isNaN(newPrice) ? product.salary : newPrice,
+        description: newDescription || product.description,
+        imageUrl: newImageUrl || product.image_Url,
+      };
+
+      await db("products").update(updatedProduct).where({ id: id });
+    } else {
+      res.status(404);
+      throw new Error("'id' não encontrada");
+    }
   } catch (error) {
     console.log(error);
 

@@ -1,5 +1,3 @@
-import { CATEGORY } from "./enum"
-
 export type TUser = {
     id: string,
     name: string,
@@ -12,7 +10,8 @@ export type TProduct = {
     id: string,
     name: string,
     price: number,
-    category: CATEGORY
+    description: string,
+    imageUrl: string
 }
 
 export type TPurchase = {
