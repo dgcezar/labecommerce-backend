@@ -17,74 +17,78 @@ app.listen(3003, () => {
 
 app.get("/ping", async (req: Request, res: Response) => {
   try {
-    res.status(200).send({ message: "Pong!" })
-} catch (error) {
-    console.log(error)
+    res.status(200).send({ message: "Pong!" });
+  } catch (error) {
+    console.log(error);
 
     if (req.statusCode === 200) {
-        res.status(500)
+      res.status(500);
     }
 
     if (error instanceof Error) {
-        res.send(error.message)
+      res.send(error.message);
     } else {
-        res.send("Erro inesperado")
+      res.send("Erro inesperado");
     }
-}
+  }
 });
 
 app.get("/users", async (req: Request, res: Response) => {
   try {
-    const result = await db("users")
+    const result = await db("users");
+    console.log(result);
     res.status(200).send(result);
   } catch (error) {
-    console.log(error)
+    console.log(error);
 
     if (req.statusCode === 200) {
-        res.status(500)
+      res.status(500);
     }
 
     if (error instanceof Error) {
-        res.send(error.message)
+      res.send(error.message);
     } else {
-        res.send("Erro inesperado")
+      res.send("Erro inesperado");
     }
-}
+  }
 });
 
 app.get("/users/:id", async (req: Request, res: Response) => {
   try {
-    const id = req.params.id;
+    const id = req.params.id as string | undefined;
 
-    const result = await db.select("id").from("users");
+    if (id !== undefined) {
+      const [result]: TUser[] | undefined[] = await db("users").where({
+        id: id,
+      });
 
-    if (!result) {
-      res.statusCode = 404;
-      throw new Error("'id' de usuário não existe");
+      if (result !== undefined) {
+        res.status(200).send(result);
+      } else {
+        res.statusCode = 404;
+        throw new Error("'id' de usuário não existe");
+      }
     }
-
-    res.status(200).send(result);
   } catch (error) {
-    console.log(error)
+    console.log(error);
 
     if (req.statusCode === 200) {
-        res.status(500)
+      res.status(500);
     }
 
     if (error instanceof Error) {
-        res.send(error.message)
+      res.send(error.message);
     } else {
-        res.send("Erro inesperado")
+      res.send("Erro inesperado");
     }
-}
+  }
 });
 
 app.get("/users/:id/purchases", async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
 
-    const result = await db("users")
-    
+    const result = await db("users");
 
     if (!result) {
       res.statusCode = 404;
@@ -93,37 +97,37 @@ app.get("/users/:id/purchases", async (req: Request, res: Response) => {
 
     res.status(200).send(result);
   } catch (error) {
-    console.log(error)
+    console.log(error);
 
     if (req.statusCode === 200) {
-        res.status(500)
+      res.status(500);
     }
 
     if (error instanceof Error) {
-        res.send(error.message)
+      res.send(error.message);
     } else {
-        res.send("Erro inesperado")
+      res.send("Erro inesperado");
     }
-}
+  }
 });
 
 app.get("/products", async (req: Request, res: Response) => {
   try {
-    const result = await db("products")
+    const result = await db("products");
     res.status(200).send(result);
   } catch (error) {
-    console.log(error)
+    console.log(error);
 
     if (req.statusCode === 200) {
-        res.status(500)
+      res.status(500);
     }
 
     if (error instanceof Error) {
-        res.send(error.message)
+      res.send(error.message);
     } else {
-        res.send("Erro inesperado")
+      res.send("Erro inesperado");
     }
-}
+  }
 });
 
 app.get("/products/search", async (req: Request, res: Response) => {
@@ -141,18 +145,18 @@ app.get("/products/search", async (req: Request, res: Response) => {
 
     res.status(200).send(result);
   } catch (error) {
-    console.log(error)
+    console.log(error);
 
     if (req.statusCode === 200) {
-        res.status(500)
+      res.status(500);
     }
 
     if (error instanceof Error) {
-        res.send(error.message)
+      res.send(error.message);
     } else {
-        res.send("Erro inesperado")
+      res.send("Erro inesperado");
     }
-}
+  }
 });
 
 app.get("/products/:id", async (req: Request, res: Response) => {
@@ -168,75 +172,70 @@ app.get("/products/:id", async (req: Request, res: Response) => {
 
     res.status(200).send(result);
   } catch (error) {
-    console.log(error)
+    console.log(error);
 
     if (req.statusCode === 200) {
-        res.status(500)
+      res.status(500);
     }
 
     if (error instanceof Error) {
-        res.send(error.message)
+      res.send(error.message);
     } else {
-        res.send("Erro inesperado")
+      res.send("Erro inesperado");
     }
-}
+  }
 });
 
 // POST
 
 app.post("/users", async (req: Request, res: Response) => {
   try {
-    const { id, name, email, password, createAt } = req.body as TUser;
+    const { id, name, email, password } = req.body as TUser;
 
     if (!id || !name || !email || !password) {
-      res.status(400)
-      throw new Error("Dados inválidos")
+      res.status(400);
+      throw new Error("Dados inválidos");
     }
-
-    
 
     const newUser = {
       id,
       name,
       email,
       password,
-      createAt,
     };
 
-    // if (newUser !== undefined) {
-    //   const idExists = users.find((idOnUsers) => idOnUsers.id === id);
+    if (newUser !== undefined) {
+      const [idExists]: TUser[] | undefined[] = await db("users").where({ id: id });
 
-    //   if (idExists) {
-    //     res.statusCode = 400;
-    //     throw new Error("'Id' já cadastrada");
-    //   }
+      if (idExists) {
+        res.statusCode = 400;
+        throw new Error("'Id' já cadastrada");
+      }
 
-    //   const emailExists = users.find(
-    //     (emailOnUsers) => emailOnUsers.email === email
-    //   );
+      const [emailExists]: TUser[] | undefined[] = await db("users").where({ email: email });
 
-    //   if (emailExists) {
-    //     res.statusCode = 400;
-    //     throw new Error("'Email' já cadastrado");
-    //   }
-    // }
+      if (emailExists) {
+        res.statusCode = 400;
+        throw new Error("'Email' já cadastrado");
+      }
+    }
 
-    await db("users").insert(newUser)
+    await db("users").insert(newUser);
 
     res.status(201).send("Usuário registrado com sucesso!");
   } catch (error) {
-    console.log(error)
+    console.log(error);
 
     if (req.statusCode === 200) {
-        res.status(500)
+      res.status(500);
     }
 
     if (error instanceof Error) {
-        res.send(error.message)
+      res.send(error.message);
     } else {
-        res.send("Erro inesperado")
+      res.send("Erro inesperado");
     }
-}
+  }
 });
 
 app.post("/products", async (req: Request, res: Response) => {
@@ -244,8 +243,8 @@ app.post("/products", async (req: Request, res: Response) => {
     const { id, name, price, category } = req.body as TProduct;
 
     if (!id || !name || !price || !category) {
-      res.status(400)
-      throw new Error("Dados inválidos")
+      res.status(400);
+      throw new Error("Dados inválidos");
     }
 
     const newProduct = {
@@ -264,22 +263,22 @@ app.post("/products", async (req: Request, res: Response) => {
     //   }
     // }
 
-    await db("products").insert(newProduct)
+    await db("products").insert(newProduct);
 
     res.status(201).send("Produto registrado com sucesso!");
   } catch (error) {
-    console.log(error)
+    console.log(error);
 
     if (req.statusCode === 200) {
-        res.status(500)
+      res.status(500);
     }
 
     if (error instanceof Error) {
-        res.send(error.message)
+      res.send(error.message);
     } else {
-        res.send("Erro inesperado")
+      res.send("Erro inesperado");
     }
-}
+  }
 });
 
 app.post("/purchases", async (req: Request, res: Response) => {
@@ -313,22 +312,22 @@ app.post("/purchases", async (req: Request, res: Response) => {
     //   }
     // }
 
-    await db("purchases").insert(newPurchase)
+    await db("purchases").insert(newPurchase);
 
     res.status(201).send("Compra realizada com sucesso");
   } catch (error) {
-    console.log(error)
+    console.log(error);
 
     if (req.statusCode === 200) {
-        res.status(500)
+      res.status(500);
     }
 
     if (error instanceof Error) {
-        res.send(error.message)
+      res.send(error.message);
     } else {
-        res.send("Erro inesperado")
+      res.send("Erro inesperado");
     }
-}
+  }
 });
 
 // DELETE
@@ -336,7 +335,6 @@ app.post("/purchases", async (req: Request, res: Response) => {
 app.delete("/users/:id", async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
-   
 
     // if (userIndex !== undefined) {
     //   if (userIndex === -1) {
@@ -348,24 +346,24 @@ app.delete("/users/:id", async (req: Request, res: Response) => {
     //   }
     // }
   } catch (error) {
-    console.log(error)
+    console.log(error);
 
     if (req.statusCode === 200) {
-        res.status(500)
+      res.status(500);
     }
 
     if (error instanceof Error) {
-        res.send(error.message)
+      res.send(error.message);
     } else {
-        res.send("Erro inesperado")
+      res.send("Erro inesperado");
     }
-}
+  }
 });
 
 app.delete("/products/:id", async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
-    
+
     // if (productIndex !== undefined) {
     //   if (productIndex === -1) {
     //     res.statusCode = 404;
@@ -376,18 +374,18 @@ app.delete("/products/:id", async (req: Request, res: Response) => {
     //   }
     // }
   } catch (error) {
-    console.log(error)
+    console.log(error);
 
     if (req.statusCode === 200) {
-        res.status(500)
+      res.status(500);
     }
 
     if (error instanceof Error) {
-        res.send(error.message)
+      res.send(error.message);
     } else {
-        res.send("Erro inesperado")
+      res.send("Erro inesperado");
     }
-}
+  }
 });
 
 // PUT
@@ -408,18 +406,18 @@ app.put("/users/:id", async (req: Request, res: Response) => {
     //   res.status(200).send("Cadastro atualizado com sucesso!");
     // }
   } catch (error) {
-    console.log(error)
+    console.log(error);
 
     if (req.statusCode === 200) {
-        res.status(500)
+      res.status(500);
     }
 
     if (error instanceof Error) {
-        res.send(error.message)
+      res.send(error.message);
     } else {
-        res.send("Erro inesperado")
+      res.send("Erro inesperado");
     }
-}
+  }
 });
 
 app.put("/products/:id", async (req: Request, res: Response) => {
@@ -440,16 +438,16 @@ app.put("/products/:id", async (req: Request, res: Response) => {
     //   res.status(200).send("Produto atualizado com sucesso!");
     // }
   } catch (error) {
-    console.log(error)
+    console.log(error);
 
     if (req.statusCode === 200) {
-        res.status(500)
+      res.status(500);
     }
 
     if (error instanceof Error) {
-        res.send(error.message)
+      res.send(error.message);
     } else {
-        res.send("Erro inesperado")
+      res.send("Erro inesperado");
     }
-}
+  }
 });
