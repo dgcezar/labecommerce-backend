@@ -2,7 +2,7 @@ import express, { Request, Response } from "express";
 import cors from "cors";
 import { CATEGORY } from "./enum";
 import { TUser, TProduct, TPurchase } from "./types";
-import { products, purchases, users } from "./database";
+import { db } from "./database/knex";
 
 const app = express();
 
@@ -15,23 +15,80 @@ app.listen(3003, () => {
 
 // GET
 
-app.get("/ping", (req: Request, res: Response) => {
-  res.send("Pong!");
-});
-
-app.get("/users", (req: Request, res: Response) => {
+app.get("/ping", async (req: Request, res: Response) => {
   try {
-    res.status(200).send(users);
-  } catch (error: any) {
-    res.status(400).send(error.message);
+    res.status(200).send({ message: "Pong!" });
+  } catch (error) {
+    console.log(error);
+
+    if (req.statusCode === 200) {
+      res.status(500);
+    }
+
+    if (error instanceof Error) {
+      res.send(error.message);
+    } else {
+      res.send("Erro inesperado");
+    }
   }
 });
 
-app.get("/users/:id", (req: Request, res: Response) => {
+app.get("/users", async (req: Request, res: Response) => {
+  try {
+    const result = await db("users");
+    console.log(result);
+    res.status(200).send(result);
+  } catch (error) {
+    console.log(error);
+
+    if (req.statusCode === 200) {
+      res.status(500);
+    }
+
+    if (error instanceof Error) {
+      res.send(error.message);
+    } else {
+      res.send("Erro inesperado");
+    }
+  }
+});
+
+app.get("/users/:id", async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string | undefined;
+
+    if (id !== undefined) {
+      const [result]: TUser[] | undefined[] = await db("users").where({
+        id: id,
+      });
+
+      if (result !== undefined) {
+        res.status(200).send(result);
+      } else {
+        res.statusCode = 404;
+        throw new Error("'id' de usuário não existe");
+      }
+    }
+  } catch (error) {
+    console.log(error);
+
+    if (req.statusCode === 200) {
+      res.status(500);
+    }
+
+    if (error instanceof Error) {
+      res.send(error.message);
+    } else {
+      res.send("Erro inesperado");
+    }
+  }
+});
+
+app.get("/users/:id/purchases", async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
 
-    const result = users.find((user) => user.id === id);
+    const result = await db("users");
 
     if (!result) {
       res.statusCode = 404;
@@ -39,101 +96,138 @@ app.get("/users/:id", (req: Request, res: Response) => {
     }
 
     res.status(200).send(result);
-  } catch (error: any) {
+  } catch (error) {
     console.log(error);
-    res.send(error.message);
-  }
-});
 
-app.get("/users/:id/purchases", (req: Request, res: Response) => {
-  try {
-    const id = req.params.id;
-
-    const result = purchases.find((purchase) => purchase.userId === id);
-
-    if (!result) {
-      res.statusCode = 404;
-      throw new Error("'id' de usuário não existe");
+    if (req.statusCode === 200) {
+      res.status(500);
     }
 
+    if (error instanceof Error) {
+      res.send(error.message);
+    } else {
+      res.send("Erro inesperado");
+    }
+  }
+});
+
+app.get("/products", async (req: Request, res: Response) => {
+  try {
+    const result = await db("products");
     res.status(200).send(result);
-  } catch (error: any) {
+  } catch (error) {
     console.log(error);
-    res.send(error.message);
+
+    if (req.statusCode === 200) {
+      res.status(500);
+    }
+
+    if (error instanceof Error) {
+      res.send(error.message);
+    } else {
+      res.send("Erro inesperado");
+    }
   }
 });
 
-app.get("/products", (req: Request, res: Response) => {
+app.get("/products/search", async (req: Request, res: Response) => {
   try {
-    res.status(200).send(products);
-  } catch (error: any) {
-    res.status(400).send(error.message);
-  }
-});
+    const q = req.query.q as string | undefined;
 
-app.get("/products/search", (req: Request, res: Response) => {
-  try {
-    const q = req.query.q as string;
+    if (q !== undefined) {
+      const [result]: TProduct[] | undefined[] = await db("products").where({
+        name: q,
+      });
 
-    const result: TProduct[] = products.filter((product) =>
-      product.name.toLowerCase().includes(q.toLowerCase())
-    );
-
-    if (result !== undefined) {
       if (q.length < 1) {
         res.statusCode = 404;
         throw new Error("'name' deve possuir no mínimo 1 caractere");
       }
+
+      if (result !== undefined) {
+        res.status(200).send(result);
+      } else {
+        res.statusCode = 404;
+        throw new Error("'name' do produto não existe");
+      }
+    }
+  } catch (error) {
+    console.log(error);
+
+    if (req.statusCode === 200) {
+      res.status(500);
     }
 
-    res.status(200).send(result);
-  } catch (error: any) {
-    console.log(error);
-    res.send(error.message);
+    if (error instanceof Error) {
+      res.send(error.message);
+    } else {
+      res.send("Erro inesperado");
+    }
   }
 });
 
-app.get("/products/:id", (req: Request, res: Response) => {
+app.get("/products/:id", async (req: Request, res: Response) => {
   try {
-    const id = req.params.id;
+    const id = req.params.id as string | undefined;
 
-    const result = products.find((product) => product.id === id);
+    if (id !== undefined) {
+      const [result]: TProduct[] | undefined[] = await db("products").where({
+        id: id,
+      });
 
-    if (!result) {
-      res.statusCode = 404;
-      throw new Error("'id' do produto não existe");
+      if (result !== undefined) {
+        res.status(200).send(result);
+      } else {
+        res.statusCode = 404;
+        throw new Error("'id' de produto não existe");
+      }
+    }
+  } catch (error) {
+    console.log(error);
+
+    if (req.statusCode === 200) {
+      res.status(500);
     }
 
-    res.status(200).send(result);
-  } catch (error: any) {
-    console.log(error);
-    res.send(error.message);
+    if (error instanceof Error) {
+      res.send(error.message);
+    } else {
+      res.send("Erro inesperado");
+    }
   }
 });
 
 // POST
 
-app.post("/users", (req: Request, res: Response) => {
+app.post("/users", async (req: Request, res: Response) => {
   try {
-    const { id, email, password } = req.body as TUser;
+    const { id, name, email, password } = req.body as TUser;
+
+    if (!id || !name || !email || !password) {
+      res.status(400);
+      throw new Error("Dados inválidos");
+    }
 
     const newUser = {
       id,
+      name,
       email,
       password,
     };
 
     if (newUser !== undefined) {
-      const idExists = users.find((idOnUsers) => idOnUsers.id === id);
+      const [idExists]: TUser[] | undefined[] = await db("users").where({
+        id: id,
+      });
 
       if (idExists) {
         res.statusCode = 400;
         throw new Error("'Id' já cadastrada");
       }
 
-      const emailExists = users.find(
-        (emailOnUsers) => emailOnUsers.email === email
-      );
+      const [emailExists]: TUser[] | undefined[] = await db("users").where({
+        email: email,
+      });
 
       if (emailExists) {
         res.statusCode = 400;
@@ -141,45 +235,89 @@ app.post("/users", (req: Request, res: Response) => {
       }
     }
 
-    users.push(newUser);
+    await db("users").insert(newUser);
 
     res.status(201).send("Usuário registrado com sucesso!");
-  } catch (error: any) {
+  } catch (error) {
     console.log(error);
-    res.send(error.message);
+
+    if (req.statusCode === 200) {
+      res.status(500);
+    }
+
+    if (error instanceof Error) {
+      res.send(error.message);
+    } else {
+      res.send("Erro inesperado");
+    }
   }
 });
 
-app.post("/products", (req: Request, res: Response) => {
+app.post("/products", async (req: Request, res: Response) => {
   try {
-    const { id, name, price, category } = req.body as TProduct;
+    const { id, name, price, description, image_url } = req.body as TProduct;
+
+    if (!id || !name || !price || !description || !image_url) {
+      res.status(400);
+      throw new Error("Dados inválidos");
+    }
 
     const newProduct = {
       id,
       name,
       price,
-      category,
+      description,
+      image_url,
     };
-
+    
     if (newProduct !== undefined) {
-      const idExists = products.find((idOnProduct) => idOnProduct.id === id);
+      const [idExists]: TProduct[] | undefined[] = await db("products").where({
+        id: id,
+      });
 
       if (idExists) {
         res.statusCode = 400;
-        throw new Error("'Id' do produto já cadastrada");
+        throw new Error("'Id' já cadastrada");
       }
+
+      const [nameExists]: TProduct[] | undefined[] = await db("products").where({
+        name: name,
+      });
+
+      if (nameExists) {
+        res.statusCode = 400;
+        throw new Error("'name' já cadastrado");
+      }
+
+      // const [imageUrlExists]: TProduct[] | undefined[] = await db("products").where({
+      //   imageUrl: imageUrl,
+      // });
+
+      // if (imageUrlExists) {
+      //   res.statusCode = 400;
+      //   throw new Error("'imageUrl' já cadastrado");
+      // }
     }
 
-    products.push(newProduct);
+    await db("products").insert(newProduct);
 
     res.status(201).send("Produto registrado com sucesso!");
-  } catch (error: any) {
+  } catch (error) {
     console.log(error);
-    res.send(error.message);
+
+    if (req.statusCode === 200) {
+      res.status(500);
+    }
+
+    if (error instanceof Error) {
+      res.send(error.message);
+    } else {
+      res.send("Erro inesperado");
+    }
   }
 });
 
-app.post("/purchases", (req: Request, res: Response) => {
+app.post("/purchases", async (req: Request, res: Response) => {
   try {
     const { userId, productId, quantity, totalPrice } = req.body as TPurchase;
 
@@ -190,140 +328,254 @@ app.post("/purchases", (req: Request, res: Response) => {
       totalPrice,
     };
 
-    if (newPurchase !== undefined) {
-      const userIdExists = users.find(
-        (userIdOnUsers) => userIdOnUsers.id === userId
-      );
+    // if (newPurchase !== undefined) {
+    //   const userIdExists = users.find(
+    //     (userIdOnUsers) => userIdOnUsers.id === userId
+    //   );
 
-      if (!userIdExists) {
-        res.statusCode = 404;
-        throw new Error("Digite a 'Id' do usuário");
-      }
+    //   if (!userIdExists) {
+    //     res.statusCode = 404;
+    //     throw new Error("Digite a 'Id' do usuário");
+    //   }
 
-      const productIdExists = products.find(
-        (productIdOnproducts) => productIdOnproducts.id === productId
-      );
+    //   const productIdExists = products.find(
+    //     (productIdOnproducts) => productIdOnproducts.id === productId
+    //   );
 
-      if (!productIdExists) {
-        res.statusCode = 404;
-        throw new Error("Digite a 'Id' do produto");
-      }
-    }
+    //   if (!productIdExists) {
+    //     res.statusCode = 404;
+    //     throw new Error("Digite a 'Id' do produto");
+    //   }
+    // }
 
-    purchases.push(newPurchase);
+    await db("purchases").insert(newPurchase);
 
     res.status(201).send("Compra realizada com sucesso");
-  } catch (error: any) {
+  } catch (error) {
     console.log(error);
-    res.send(error.message);
+
+    if (req.statusCode === 200) {
+      res.status(500);
+    }
+
+    if (error instanceof Error) {
+      res.send(error.message);
+    } else {
+      res.send("Erro inesperado");
+    }
   }
 });
 
 // DELETE
 
-app.delete("/users/:id", (req: Request, res: Response) => {
+app.delete("/users/:id", async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
 
-    const userIndex = users.findIndex((user) => user.id === id);
+    const [user] = await db("users").where({ id: id });
 
-    if (userIndex !== undefined) {
-      if (userIndex === -1) {
-        res.statusCode = 404;
-        throw new Error("'id' do usuário não existe");
-      } else {
-        users.splice(userIndex, 1);
-        res.status(200).send("Usuário deletado com sucesso");
-      }
+    if (!user) {
+      res.status(404);
+      throw new Error("'id' não encontrada");
     }
-  } catch (error: any) {
+
+    await db("users").del().where({ id: id });
+  } catch (error) {
     console.log(error);
-    if (res.statusCode === 200) res.status(500);
-    res.send(error.message);
+
+    if (req.statusCode === 200) {
+      res.status(500);
+    }
+
+    if (error instanceof Error) {
+      res.send(error.message);
+    } else {
+      res.send("Erro inesperado");
+    }
   }
 });
 
-app.delete("/products/:id", (req: Request, res: Response) => {
+app.delete("/products/:id", async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
 
-    const productIndex = products.findIndex((product) => product.id === id);
+    const [product] = await db("products").where({ id: id });
 
-    if (productIndex !== undefined) {
-      if (productIndex === -1) {
-        res.statusCode = 404;
-        throw new Error("'id' do produto não existe");
-      } else {
-        products.splice(productIndex, 1);
-        res.status(200).send("Produto deletado com sucesso");
-      }
+    if (!product) {
+      res.status(404);
+      throw new Error("'id' do produto não encontrada");
     }
-  } catch (error: any) {
+
+    await db("products").del().where({ id: id });
+  } catch (error) {
     console.log(error);
-    if (res.statusCode === 200) res.status(500);
-    res.send(error.message);
+
+    if (req.statusCode === 200) {
+      res.status(500);
+    }
+
+    if (error instanceof Error) {
+      res.send(error.message);
+    } else {
+      res.send("Erro inesperado");
+    }
   }
 });
 
 // PUT
 
-app.put("/users/:id", (req: Request, res: Response) => {
-  try {
-    const id = req.params.id;
-
-    const newEmail = req.body.email as string | undefined;
-    const newPassword = req.body.password as string | undefined;
-
-    const user = users.find((user) => user.id === id);
-
-    if (!user) {
-      res.statusCode = 404;
-      throw new Error("'Id' do usuário não existe");
-    } else {
-      user.email = newEmail || user.email;
-      user.password = newPassword || user.password;
-      res.status(200).send("Cadastro atualizado com sucesso!");
-    }
-  } catch (error: any) {
-    console.log(error);
-    if (res.statusCode === 200) res.status(500);
-    res.send(error.message);
-  }
-});
-
-app.put("/products/:id", (req: Request, res: Response) => {
+app.put("/users/:id", async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
 
     const newName = req.body.name as string | undefined;
-    const newPrice = req.body.price as number | undefined;
-    const newCategory = req.body.category as CATEGORY | undefined;
+    const newEmail = req.body.email as string | undefined;
+    const newPassword = req.body.password as string | undefined;
 
-    const product = products.find((product) => product.id === id);
-
-    if (!product) {
-      res.statusCode = 404;
-      throw new Error("'Id' do produto não existe");
-    } else {
-      product.name = newName || product.name;
-      product.price = newPrice || product.price;
-      product.category = newCategory || product.category;
-      res.status(200).send("Produto atualizado com sucesso!");
+    if (newName !== undefined) {
+      if (typeof newName !== "string") {
+        res.status(400);
+        throw new Error("'name' deve ser string");
+      }
+      if (newName.length < 4) {
+        res.status(400);
+        throw new Error("'name' deve possuir no mínimo 4 caracteres");
+      }
     }
-  } catch (error: any) {
+
+    if (newEmail !== undefined) {
+      if (typeof newEmail !== "string") {
+        res.status(400);
+        throw new Error("'email' deve ser string");
+      }
+      if (newEmail.length < 10) {
+        res.status(400);
+        throw new Error("'email' deve possuir no mínimo 10 caracteres");
+      }
+    }
+
+    if (newPassword !== undefined) {
+      if (typeof newPassword !== "string") {
+        res.status(400);
+        throw new Error("'password' deve ser string");
+      }
+
+      if (newPassword.length < 6) {
+        res.status(400);
+        throw new Error("'password' deve possuir no mínimo 6 caracteres");
+      }
+    }
+
+    const [user] = await db("users").where({ id: id });
+
+    if (user) {
+      const updatedUser = {
+        name: newName || user.name,
+        email: newEmail || user.email,
+        password: newPassword || user.password,
+      };
+
+      await db("users").update(updatedUser).where({ id: id });
+    } else {
+      res.status(404);
+      throw new Error("'id' não encontrada");
+    }
+  } catch (error) {
     console.log(error);
-    if (res.statusCode === 200) res.status(500);
-    res.send(error.message);
+
+    if (req.statusCode === 200) {
+      res.status(500);
+    }
+
+    if (error instanceof Error) {
+      res.send(error.message);
+    } else {
+      res.send("Erro inesperado");
+    }
   }
 });
 
-// import { createProduct, createPurchase, createUser, getAllProducts, getAllPurchasesFromUserid, getAllUsers, getProductById, products, purchases, users } from "./database";
-// import { CATEGORY } from "./enum";
+app.put("/products/:id", async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id;
 
-// createUser("0922", "asd@gmail.com", "92041")
-// console.log(getAllUsers())
-// console.log(createProduct("p033", "Pulseira", 12, CATEGORY.ACCESSORIES))
-// console.log(getAllProducts())
-// console.log(getProductById("p01"))
-// console.log(createPurchase("01", "p02", 2, 5))
-// console.log(getAllPurchasesFromUserid("01"))
+    const newName = req.body.name as string | undefined;
+    const newPrice = req.body.price as number;
+    const newDescription = req.body.description as string | undefined;
+    const newImageUrl = req.body.image_url as string | undefined;
+
+    if (newName !== undefined) {
+      if (typeof newName !== "string") {
+        res.status(400);
+        throw new Error("'name' deve ser string");
+      }
+      if (newName.length < 4) {
+        res.status(400);
+        throw new Error("'name' deve possuir no mínimo 4 caracteres");
+      }
+    }
+
+    if (newPrice !== undefined) {
+      if (typeof newPrice !== "number") {
+        res.status(400);
+        throw new Error("'price' deve ser number");
+      }
+      if (newPrice < 0) {
+        res.status(400);
+        throw new Error("'price' não pode ser negativo");
+      }
+    }
+
+    if (newDescription !== undefined) {
+      if (typeof newDescription !== "string") {
+        res.status(400);
+        throw new Error("'description' deve ser string");
+      }
+
+      if (newDescription.length < 20) {
+        res.status(400);
+        throw new Error("'description' deve possuir no mínimo 20 caracteres");
+      }
+    }
+
+    if (newImageUrl !== undefined) {
+      if (typeof newImageUrl !== "string") {
+        res.status(400);
+        throw new Error("'image_url' deve ser string");
+      }
+
+      if (newImageUrl.length < 10) {
+        res.status(400);
+        throw new Error("'image_url' deve possuir no mínimo 10 caracteres");
+      }
+    }
+
+    const [product] = await db("products").where({ id: id });
+
+    if (product) {
+      const updatedProduct = {
+        name: newName || product.name,
+        price: isNaN(newPrice) ? product.salary : newPrice,
+        description: newDescription || product.description,
+        image_url: newImageUrl || product.image_url,
+      };
+
+      await db("products").update(updatedProduct).where({ id: id });
+    } else {
+      res.status(404);
+      throw new Error("'id' não encontrada");
+    }
+  } catch (error) {
+    console.log(error);
+
+    if (req.statusCode === 200) {
+      res.status(500);
+    }
+
+    if (error instanceof Error) {
+      res.send(error.message);
+    } else {
+      res.send("Erro inesperado");
+    }
+  }
+});
