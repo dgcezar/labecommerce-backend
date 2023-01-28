@@ -11,7 +11,7 @@ Abaixo estão as tecnologias utilizadas no projeto.
 * Express.js
 * API REST
 * Typescript
-* SQL
+* SQLite
 
 ## Serviços usados
 
@@ -23,11 +23,14 @@ Abaixo estão as tecnologias utilizadas no projeto.
 - npm start
 
 ## Features
-
+ 
+- Criar novos produtos, usuários e pedidos
+- Alterar os dados dos produtos e usuários
+- Visualizar os produtos, usuários e pedidos
 
 ## Links
   - Documentação da API: https://documenter.getpostman.com/view/24461306/2s8ZDa21cL
-  - Repositório: 
+  - Repositório: https://github.com/dgcezar/labecommerce-backend
 
   ## Autor
 
